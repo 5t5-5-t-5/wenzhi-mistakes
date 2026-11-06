@@ -5,7 +5,7 @@ root=Path(__file__).resolve().parent
 out=root/'_site'
 if out.exists(): shutil.rmtree(out)
 out.mkdir()
-for name in ['index.html','parent.html','child.html','styles.css','parent-responsive.css','logic.js','data.js','ui.js','parent.js','child.js','photo.js','print.js','sync-client.js','github-direct.js','sw.js','manifest.webmanifest','manifest-parent.webmanifest','icon.svg','icon-180.png','icon-child-180.png','icon-192.png','icon-512.png']:
+for name in ['index.html','parent.html','child.html','styles.css','parent-responsive.css','logic.js','data.js','ui.js','parent.js','child.js','digital-question.js','digital-editor.js','recognition-client.js','photo.js','print.js','sync-client.js','github-direct.js','sw.js','manifest.webmanifest','manifest-parent.webmanifest','icon.svg','icon-180.png','icon-child-180.png','icon-192.png','icon-512.png']:
     shutil.copy2(root/name,out/name)
 shutil.copytree(root/'vendor',out/'vendor')
 (out/'.nojekyll').touch()

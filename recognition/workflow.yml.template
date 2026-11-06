@@ -1,0 +1,34 @@
+name: Recognize a clean editable question
+on:
+  push:
+    paths:
+      - 'recognition/requests/*.json'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: family-question-recognition
+  cancel-in-progress: false
+jobs:
+  recognize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Load pinned trusted processor
+        uses: actions/checkout@v4
+        with:
+          repository: 5t5-5-t-5/wenzhi-mistakes
+          ref: __PINNED_SHA__
+          path: processor
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Process private question requests
+        run: node processor/recognition/process-queue.mjs
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          DATA_REPOSITORY: ${{ github.repository }}
+          RECOGNITION_MODEL: gpt-4.1
+          MAX_DAILY_RECOGNITION: '30'

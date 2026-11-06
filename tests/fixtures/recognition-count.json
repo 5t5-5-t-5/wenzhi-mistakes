@@ -1,0 +1,77 @@
+{
+  "text": "看图填一填。\n\n图中有（　）个红色圆片。",
+  "diagram": {
+    "afterParagraph": 1,
+    "width": 800,
+    "height": 300,
+    "elements": [
+      {
+        "type": "group",
+        "dx": 0,
+        "dy": 0,
+        "fill": "none",
+        "stroke": "#111111",
+        "strokeWidth": 2,
+        "children": [
+          {
+            "type": "circle",
+            "dx": 0,
+            "dy": 0,
+            "fill": "#ff3333",
+            "stroke": "#111111",
+            "strokeWidth": 2,
+            "cx": 180,
+            "cy": 125,
+            "r": 70
+          }
+        ]
+      },
+      {
+        "type": "group",
+        "dx": 0,
+        "dy": 0,
+        "fill": "none",
+        "stroke": "#111111",
+        "strokeWidth": 2,
+        "children": [
+          {
+            "type": "circle",
+            "dx": 0,
+            "dy": 0,
+            "fill": "#ff3333",
+            "stroke": "#111111",
+            "strokeWidth": 2,
+            "cx": 360,
+            "cy": 125,
+            "r": 70
+          }
+        ]
+      },
+      {
+        "type": "group",
+        "dx": 0,
+        "dy": 0,
+        "fill": "none",
+        "stroke": "#111111",
+        "strokeWidth": 2,
+        "children": [
+          {
+            "type": "circle",
+            "dx": 0,
+            "dy": 0,
+            "fill": "#ff3333",
+            "stroke": "#111111",
+            "strokeWidth": 2,
+            "cx": 540,
+            "cy": 125,
+            "r": 70
+          }
+        ]
+      }
+    ]
+  },
+  "issues": [],
+  "needsCrop": false,
+  "needsManualFigure": false,
+  "model": "gpt-4.1"
+}

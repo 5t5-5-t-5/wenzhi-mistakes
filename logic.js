@@ -1,3 +1,4 @@
+import {normalizeDiagram} from './digital-question.js';
 export const SUBJECTS = [
   { id:'math', name:'数学', short:'数', symbol:'1 + 2', color:'#cb6b43', light:'#fbebdf', edition:'北师大版' },
   { id:'chinese', name:'语文', short:'语', symbol:'字 · 词', color:'#4d7862', light:'#e6efe6', edition:'统编版 · 人民教育出版社' },
@@ -17,14 +18,19 @@ const cut = (value,n=12000)=>String(value??'').slice(0,n);
 export function questionOf(q){
   if(q?.id&&!goodId(q.id))throw Error('题目编号不正确。');
   if(!q||!SUBJECTS.some(s=>s.id===q.subject))throw Error('请选择科目。');
-  return {id:q.id||uid(),subject:q.subject,unitId:cut(q.unitId,100),title:cut(q.title,120).trim(),
-    text:cut(q.text).trim(),answer:cut(q.answer),analysis:cut(q.analysis),tags:cut(q.tags,150),reason:cut(q.reason,100),
+  const normalized={id:q.id||uid(),subject:q.subject,unitId:cut(q.unitId,100),title:cut(q.title,120).trim(),
+    text:cut(q.text).trim(),renderMode:q.renderMode==='digital'?'digital':'photo',diagram:normalizeDiagram(q.diagram),diagramRequired:!!q.diagramRequired,answer:cut(q.answer),analysis:cut(q.analysis),tags:cut(q.tags,150),reason:cut(q.reason,100),
     sourceType:['book','test','practice','other'].includes(q.sourceType)?q.sourceType:'book',
     source:cut(q.source,180),page:cut(q.page,40),number:cut(q.number,40),
     image:q.image||'',originalImage:q.originalImage||'',imageRef:q.imageRef||'',originalImageRef:q.originalImageRef||'',
     imageEdits:q.imageEdits||null,status:STATUS[q.status]?q.status:'todo',version:q.version||0,statusVersion:q.statusVersion||0,
     createdAt:q.createdAt||new Date().toISOString(),updatedAt:q.updatedAt||new Date().toISOString(),
     lastPracticedAt:q.lastPracticedAt||null,deletedAt:q.deletedAt||null};
+  if(normalized.renderMode==='digital'){
+    if(!normalized.originalImage&&!normalized.originalImageRef){normalized.originalImage=normalized.image;normalized.originalImageRef=normalized.imageRef;}
+    normalized.image='';normalized.imageRef='';
+  }
+  return normalized;
 }
 export function titleOf(q){return q.title||q.text.split('\n')[0].slice(0,40)||'照片题目';}
 export function eligible(questions,subject,unitId){
@@ -57,7 +63,9 @@ export function applyOperation(input,op,role='parent'){
   if(op.type==='save'){
     const q=questionOf(p.question),old=state.questions[q.id];
     if(old&&(p.baseVersion??0)!==old.version)throw Error('这道题已在另一台设备修改，请先同步。');
-    if(!q.text&&!q.image&&!q.imageRef)throw Error('请上传题目图片或填写题干。');
+    if(q.renderMode==='digital'&&q.diagramRequired&&!q.diagram?.elements.length)throw Error('原题中的图形尚未补全，请先根据原图添加图形再保存电子题。');
+    if(q.renderMode==='digital'&&!q.text&&!q.diagram?.elements.length)throw Error('请先填写电子题内容或添加图形，再保存。');
+    if(q.renderMode!=='digital'&&!q.text&&!q.image&&!q.imageRef)throw Error('请上传题目图片或填写题干。');
     if(!state.settings.units.some(u=>u.id===q.unitId&&u.subject===q.subject))throw Error('请选择有效单元。');
     q.version=(old?.version||0)+1;q.statusVersion=old?.statusVersion||0;
     q.status=old?.status||q.status;q.updatedAt=op.at;q.deletedAt=old?.deletedAt||null;
@@ -111,7 +119,7 @@ export function childSnapshot(state){
   const settings={...state.settings};delete settings.parentPinHash;delete settings.parentAuth;
   return {schema:1,revision:state.revision,settings,questions:Object.fromEntries(q.map(x=>{
     const {answer,analysis,reason,originalImage,originalImageRef,imageEdits,...safe}=x;
-    return [x.id,safe];
+    if(x.renderMode==='digital'){safe.image='';safe.imageRef='';}return [x.id,safe];
   })),attempts:{},applied:[]};
 }
 export function validateBackup(b){

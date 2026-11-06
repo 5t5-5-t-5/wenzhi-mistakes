@@ -73,7 +73,7 @@ export function createHandler(storeFactory=env=>new GitHubStore(env)){
       }
       if(path.startsWith('/api/assets/')&&req.method==='GET'){
         const ref=path.split('/').pop();if(!goodRef(ref))throw new HTTPError(400,'图片编号不正确。');const {state}=await store.read();
-        const allowed=user.role==='parent'?Object.values(state.questions).some(q=>q.imageRef===ref||q.originalImageRef===ref)||Object.values(state.attempts).some(a=>a.photoRef===ref):Object.values(state.questions).some(q=>!q.deletedAt&&q.status!=='mastered'&&q.imageRef===ref);
+        const allowed=user.role==='parent'?Object.values(state.questions).some(q=>q.imageRef===ref||q.originalImageRef===ref)||Object.values(state.attempts).some(a=>a.photoRef===ref):Object.values(state.questions).some(q=>!q.deletedAt&&q.status!=='mastered'&&q.renderMode!=='digital'&&q.imageRef===ref);
         if(!allowed)throw new HTTPError(403,'无权打开这张图片。');const data=await store.asset(ref);if(!data)throw new HTTPError(404,'图片不存在。');return new Response(data,{headers:{...headers,'Content-Type':ref.endsWith('.jpg')?'image/jpeg':ref.endsWith('.png')?'image/png':'image/webp'}});
       }
       throw new HTTPError(404,'接口不存在。');
