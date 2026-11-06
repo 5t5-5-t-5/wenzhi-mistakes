@@ -14,7 +14,7 @@ export class GitHubStore{
   constructor(env){this.env=env;this.base=`https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/`;}
   async api(path,method='GET',body,raw=false){
     const r=await fetch(this.base+path+(method==='GET'?'?ref='+encodeURIComponent(this.env.GITHUB_BRANCH||'main'):''),{method,headers:{Authorization:`Bearer ${this.env.GITHUB_TOKEN}`,Accept:raw?'application/vnd.github.raw+json':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','User-Agent':'wenzhi-mistakes-sync','Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
-    if(r.status===404)return null;if(r.status===409||r.status===422)throw new HTTPError(409,'云端已变化，请重试同步。');if(!r.ok)throw new HTTPError(502,r.status===403||r.status===429?'GitHub 暂时限制请求，请稍后重试。':'GitHub 数据服务暂时不可用。');return raw?r:await r.json();
+    if(r.status===404){if(method==='GET')return null;throw new HTTPError(404,'数据仓库不可写，请检查服务器权限。');}if(r.status===409||r.status===422)throw new HTTPError(409,'云端已变化，请重试同步。');if(!r.ok)throw new HTTPError(502,r.status===403||r.status===429?'GitHub 暂时限制请求，请稍后重试。':'GitHub 数据服务暂时不可用。');return raw?r:await r.json();
   }
   async read(){const file=await this.api('state.json');if(!file)return {state:emptyState(),sha:null};let value;
     if(file.encoding==='base64')value=new TextDecoder().decode(bytes(file.content.replace(/\s/g,'')));else value=await (await this.api('state.json','GET',undefined,true)).text();

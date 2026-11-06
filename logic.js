@@ -90,7 +90,7 @@ export function applyOperation(input,op,role='parent'){
     for(const old of Object.values(state.attempts))if(old.questionId===q.id&&old.result==='pending'){old.result=p.result;old.reviewedAt=op.at;}
     q.status=p.result==='correct'?'mastered':'practicing';q.statusVersion++;q.version++;q.lastPracticedAt=op.at;q.updatedAt=op.at;
   }else if(op.type==='importBackup'){
-    const b=validateBackup(p.backup),virgin=!Object.keys(state.questions).length&&state.settings.version===0;if(virgin)state.settings={...normalizeSettings(b.state.settings),version:0};
+    const b=validateBackup(p.backup),virgin=!Object.keys(state.questions).length;if(virgin){const current=state.settings;state.settings={...normalizeSettings(b.state.settings),version:current.version,...(current.parentAuth?{parentAuth:current.parentAuth}:{})};}
     const units=new Set(state.settings.units.map(u=>u.id));
     for(const u of b.state.settings.units)if(!units.has(u.id)){state.settings.units.push(u);units.add(u.id);}
     state.settings.version++;
@@ -108,7 +108,7 @@ export function applyOperation(input,op,role='parent'){
 }
 export function childSnapshot(state){
   const q=Object.values(state.questions).filter(x=>!x.deletedAt&&x.status!=='mastered');
-  const settings={...state.settings};delete settings.parentPinHash;
+  const settings={...state.settings};delete settings.parentPinHash;delete settings.parentAuth;
   return {schema:1,revision:state.revision,settings,questions:Object.fromEntries(q.map(x=>{
     const {answer,analysis,reason,originalImage,originalImageRef,imageEdits,...safe}=x;
     return [x.id,safe];

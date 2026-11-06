@@ -44,11 +44,14 @@ async function review(result){const buttons=[$('childCorrect'),$('childRetry')];
 }
 const actions={start:id=>start(id),home:async()=>{task=null;await saveTask();renderHome();},print:()=>openPrint(qNow(),state.settings.name),done:async()=>{task.phase='ready';await saveTask();renderReady();},backQuestion:async()=>{task.phase='working';await saveTask();render();},submit,parent:showParent};
 $('childContent').onclick=e=>{const t=e.target.closest('[data-action]');if(t){t.disabled=true;Promise.resolve(actions[t.dataset.action]?.(t.dataset.id)).catch(e=>toast(e.message)).finally(()=>t.disabled=false);}};
-$('childCorrect').onclick=()=>review('correct');$('childRetry').onclick=()=>review('retry');$('childConnect').onclick=()=>$('childConnectDialog').showModal();$('applyPairLink').onclick=async()=>{try{await sync.acceptPair($('pairLink').value);location.replace('child.html');}catch(e){toast(e.message);}};
+$('childCorrect').onclick=()=>review('correct');$('childRetry').onclick=()=>review('retry');$('childConnect').onclick=()=>$('childConnectDialog').showModal();$('applyPairLink').onclick=async()=>{try{await sync.acceptPair($('pairLink').value,$('pairPassword').value);location.replace('child.html');}catch(e){toast(e.message);}};
 initDialogs();initPrint();
 try{
   db=await new NotebookDB().open(await childDatabaseName());state=await db.state();task=(await db.get('meta','currentTask'))?.value||null;
   sync=new SyncClient(db,'child',next=>{state=next;render();},info=>{const old=needsParentSync;needsParentSync=!!info.configured&&info.parentOps;if(old!==needsParentSync&&task&&(task.phase==='submitted'||task.phase==='finished'||qNow()?.status==='mastered'))render();$('childSyncStatus').textContent=info.busy?'正在同步':!info.configured?'仅本机':info.error?'记录已保存，待同步':info.count?'待同步':info.last?'已同步':'已连接';});
-  if(location.hash.startsWith('#connect=')){await sync.acceptPair(location.href);history.replaceState(null,'',location.pathname);location.reload();}
+  if(location.hash.startsWith('#connect=')){
+    try{await sync.acceptPair(location.href);history.replaceState(null,'',location.pathname);location.reload();}
+    catch(e){if(e.code!=='PAIR_PASSWORD')throw e;renderHome();$('pairLink').value=location.href;$('childConnectDialog').showModal();}
+  }
   else{render();sync.sync();registerOffline();window.addEventListener('focus',async()=>{state=await db.state();render();sync.sync();});}
 }catch(e){$('childContent').innerHTML=`<div class="empty-state"><h1>请家长来帮忙连接</h1><p>${esc(e.message)}</p></div>`;}

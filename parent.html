@@ -98,7 +98,19 @@
 </dialog>
 
 <dialog id="lightboxDialog" class="modal lightbox-modal"><button class="close" data-close="lightboxDialog" aria-label="关闭大图">×</button><img id="lightboxImage" alt="题目大图"></dialog>
-<dialog id="syncDialog" class="modal compact-modal"><div class="modal-heading"><div><p class="eyebrow">家长端和 iPad 共用一份记录</p><h2>家庭同步</h2></div><button class="close" data-close="syncDialog" aria-label="关闭">×</button></div><p class="muted">接口负责读写 GitHub 私有仓库。GitHub 访问钥匙保留在接口服务，不放进孩子端。</p><label>同步接口地址<input id="syncURL" type="url" placeholder="https://你的接口.workers.dev" autocomplete="url"></label><label>家长同步密码<input id="syncPassword" type="password" autocomplete="current-password" placeholder="部署时设置的家长密码"></label><p id="syncMessage" class="muted"></p><div class="modal-footer"><button class="primary" id="connectSync">连接并同步</button><button class="secondary" id="syncNow">立即同步</button><button class="quiet" id="copyChildLink">复制 iPad 配对链接</button></div><label id="pairGeneratedLabel" hidden>iPad 配对链接（只给自己的设备）<textarea id="pairGeneratedText" readonly rows="3"></textarea></label><button class="text-button danger" id="resetSyncFromCloud">处理冲突：导出本机备份后使用云端记录</button><p class="storage-note">未配置接口时，完整功能可在本机使用；界面会明确显示“仅本机保存”。导出备份不会包含登录密码或配对钥匙。</p></dialog>
+<dialog id="syncDialog" class="modal compact-modal">
+<div class="modal-heading"><div><p class="eyebrow">家长端和 iPad 共用一份记录</p><h2>家庭同步</h2></div><button class="close" data-close="syncDialog" aria-label="关闭">×</button></div>
+<label>连接方式<select id="syncMode"><option value="github">直接连接 GitHub · 无需其他账号</option><option value="server">已有家庭同步接口</option></select></label>
+<section id="githubSyncFields"><p class="muted">网页直接读写错题专用的私有仓库。密钥只保存在你配置的设备，不会发布到网页源码。</p>
+<label>私有数据仓库<input id="githubRepo" value="5t5-5-t-5/wenzhi-mistakes-data" placeholder="GitHub 用户名/仓库名" autocapitalize="none" spellcheck="false"></label>
+<label>仓库专用密钥<input id="githubToken" type="password" autocomplete="off" placeholder="github_pat_ 开头，只授权上述私有仓库"></label>
+<p class="muted tiny"><a href="https://github.com/settings/personal-access-tokens/new?name=Wenzhi+Notebook&amp;target_name=5t5-5-t-5&amp;expires_in=365&amp;contents=write" target="_blank" rel="noopener noreferrer">在 GitHub 创建专用密钥 ↗</a>　选择上述仓库，Contents 权限设为 Read and write。</p>
+<label>家长密码<input id="githubPassword" type="password" autocomplete="current-password" minlength="8" placeholder="首次连接设一个至少 8 位的密码"></label>
+<p class="storage-note">这是家庭设备直连方式。家长密码防止页面误操作；两端持有相同的仓库读写权限。配对链接会加密，iPad 连接时由家长输入密码。</p></section>
+<section id="serverSyncFields" hidden><p class="muted">已有接口负责区分家长与孩子的访问权限。</p><label>同步接口地址<input id="syncURL" type="url" placeholder="https://你的家庭同步接口" autocomplete="url"></label><label>家长同步密码<input id="syncPassword" type="password" autocomplete="current-password" placeholder="接口的家长密码"></label></section>
+<p id="syncMessage" class="muted"></p><div class="modal-footer"><button class="primary" id="connectSync">连接并同步</button><button class="secondary" id="syncNow">立即同步</button><button class="quiet" id="copyChildLink">生成 iPad 配对链接</button></div>
+<label id="pairGeneratedLabel" hidden>iPad 配对链接（只给自己的设备）<textarea id="pairGeneratedText" readonly rows="3"></textarea></label><button class="text-button danger" id="resetSyncFromCloud">处理冲突：导出本机备份后使用云端记录</button><p class="storage-note">未连接时仅本机保存。导出备份不含仓库密钥或配对钥匙。密钥请勿发到聊天中。</p></dialog>
+
 <dialog id="parentAuthDialog" class="modal compact-modal"><div class="modal-heading"><h2>家长验证</h2><button class="close" data-close="parentAuthDialog" aria-label="关闭">×</button></div><p class="muted" id="authHint"></p><label>家长密码<input id="authPassword" type="password" autocomplete="current-password"></label><p id="authError" class="form-error" hidden></p><button class="primary" id="authConfirm">确认</button></dialog>
 <div id="toast" role="status" aria-live="polite" hidden></div>
 <script type="module" src="parent.js"></script>

@@ -59,9 +59,20 @@ $('reviewCorrect').onclick=()=>review('correct').catch(e=>toast(e.message));$('r
 $('exportBackup').onclick=()=>download('问之错题备份-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({app:'wenzhi-mistakes',version:1,exportedAt:new Date().toISOString(),state},null,2));
 $('chooseImport').onclick=()=>$('importInput').click();$('importInput').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;try{if(file.size>180*1024*1024)throw Error('备份超过 180 MB，请拆分后导入。');const b=validateBackup(JSON.parse(await file.text()));if(demo){state=applyOperation(state,operation('importBackup',{backup:b})).state;render();}else{const result=await db.importBackup(b);state=result.state;render();sync.schedule();}toast('备份已合并，作答记录也已保留。');$('backupDialog').close();}catch(e){toast(e.message);}};
 $('exitDemo').onclick=()=>location.href='parent.html';
-$('syncButton').onclick=()=>{if(demo)return toast('示例模式不连接家庭同步。');$('syncURL').value=sync.config?.url||'';$('syncDialog').showModal();sync.status();};
-$('connectSync').onclick=async()=>{const b=$('connectSync');b.disabled=true;try{await sync.login($('syncURL').value,$('syncPassword').value);$('syncPassword').value='';await sync.sync();}catch(e){$('syncMessage').textContent=e.message;}finally{b.disabled=false;}};
-$('syncNow').onclick=()=>sync.sync();$('copyChildLink').onclick=async()=>{try{const link=await sync.pairLink();$('pairGeneratedText').value=link;$('pairGeneratedLabel').hidden=false;try{await navigator.clipboard.writeText(link);toast('已复制，在 iPad 的 Safari 中打开即可。');}catch{toast('配对链接已生成，请长按下方链接复制。');}}catch(e){$('syncMessage').textContent=e.message;}};
+function syncMode(){const direct=$('syncMode').value==='github';$('githubSyncFields').hidden=!direct;$('serverSyncFields').hidden=direct;}
+$('syncMode').onchange=syncMode;
+$('syncButton').onclick=()=>{if(demo)return toast('示例模式不连接家庭同步。');const c=sync.config;$('syncMode').value=c&&c.kind!=='github'?'server':'github';$('syncURL').value=c?.kind==='github'?'':c?.url||'';$('githubRepo').value=c?.kind==='github'?c.owner+'/'+c.repo:'5t5-5-t-5/wenzhi-mistakes-data';$('githubToken').placeholder=c?.kind==='github'?'已保存在本机；留空沿用专用密钥':'github_pat_ 开头，只授权上述私有仓库';syncMode();$('syncDialog').showModal();sync.status();};
+$('connectSync').onclick=async()=>{const b=$('connectSync');b.disabled=true;try{
+  if($('syncMode').value==='github'){
+    const repo=$('githubRepo').value.trim(),c=sync.config,token=$('githubToken').value.trim()||(c?.kind==='github'&&repo===c.owner+'/'+c.repo?c.token:'');
+    const {lock,newLock}=await sync.configureGitHub(repo,token,$('githubPassword').value);
+    if(newLock)await commit(operation('settings',{settings:{...state.settings,parentAuth:lock},baseVersion:state.settings.version}));
+    $('githubToken').value='';
+  }else{await sync.login($('syncURL').value,$('syncPassword').value);$('syncPassword').value='';}
+  await sync.sync();
+}catch(e){sync.lastError=e.message;$('syncMessage').textContent=e.message;}finally{b.disabled=false;}};
+$('syncNow').onclick=()=>sync.sync();
+$('copyChildLink').onclick=async()=>{try{const link=await sync.pairLink($('githubPassword').value);$('githubPassword').value='';$('pairGeneratedText').value=link;$('pairGeneratedLabel').hidden=false;try{await navigator.clipboard.writeText(link);toast('已复制，用 iPad Safari 打开，再输入家长密码配对。');}catch{toast('链接已生成，请长按下方链接复制。');}}catch(e){$('syncMessage').textContent=e.message;}};
 
 $('resetSyncFromCloud').onclick=async()=>{try{
   if(!sync.config)throw Error('请先填写接口地址并登录。');
@@ -70,8 +81,9 @@ $('resetSyncFromCloud').onclick=async()=>{try{
   if(!confirm('本机完整备份已导出。确认使用云端记录，并清理本机尚未同步的 '+queued.length+' 项更改？请先确认备份已保存。'))return;
   state=await db.replace(remote,queued.map(o=>o.id));sync.lastError='';render();await sync.sync();toast('已使用云端记录。本机旧更改保存在刚导出的备份中。');
 }catch(e){$('syncMessage').textContent=e.message;}};
+$('syncDialog').addEventListener('close',()=>{$('githubPassword').value='';$('githubToken').value='';$('syncPassword').value='';});
 initDialogs();initPrint();
 try{db=await new NotebookDB().open();state=demo?demoState():await db.state();$('demoBanner').hidden=!demo;render();if(demo)$('syncStatus').textContent='示例模式，不写入你的记录';
-  sync=new SyncClient(db,'parent',next=>{state=next;render();},info=>{const text=info.busy?'正在同步……':!info.configured?'仅本机保存 · '+(info.count?'尚未连接家庭同步':'准备好了'):info.error?'待同步 · '+info.error:info.needsLogin?'已保存本机 · 请登录同步':info.count?`已保存本机 · ${info.count} 项待同步`:info.last?'已同步 · '+new Date(info.last).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):'已连接，等待同步';$('syncStatus').textContent=demo?'示例模式，不写入你的记录':text;$('syncMessage').textContent=text;});
+  sync=new SyncClient(db,'parent',next=>{state=next;render();},info=>{const text=info.busy?'正在同步……':info.error?'待同步 · '+info.error:!info.configured?'仅本机保存 · '+(info.count?'尚未连接家庭同步':'准备好了'):info.needsLogin?'已保存本机 · 请登录同步':info.count?`已保存本机 · ${info.count} 项待同步`:info.last?'已同步 · '+new Date(info.last).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):'已连接，等待同步';$('syncStatus').textContent=demo?'示例模式，不写入你的记录':text;$('syncMessage').textContent=text;});
   if(!demo){sync.sync();window.addEventListener('focus',async()=>{state=await db.state();render();sync.sync();});registerOffline();}
 }catch(e){$('content').innerHTML=empty('小册暂时打不开',e.message,'');}
