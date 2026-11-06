@@ -12,8 +12,10 @@ export function defaults() {
   };
 }
 export function emptyState(){return {schema:1,revision:0,settings:defaults(),questions:{},attempts:{},applied:[]};}
+const goodId=s=>typeof s==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(s)&&!Object.hasOwn(Object.prototype,s);
 const cut = (value,n=12000)=>String(value??'').slice(0,n);
 export function questionOf(q){
+  if(q?.id&&!goodId(q.id))throw Error('题目编号不正确。');
   if(!q||!SUBJECTS.some(s=>s.id===q.subject))throw Error('请选择科目。');
   return {id:q.id||uid(),subject:q.subject,unitId:cut(q.unitId,100),title:cut(q.title,120).trim(),
     text:cut(q.text).trim(),answer:cut(q.answer),analysis:cut(q.analysis),tags:cut(q.tags,150),reason:cut(q.reason,100),
@@ -39,7 +41,7 @@ export function normalizeSettings(s){
   const d=defaults();const seen=new Set();
   if(!s||!Array.isArray(s.units)||s.units.length>200)throw Error('单元设置不正确。');
   for(const u of s.units){
-    if(!u||!SUBJECTS.some(x=>x.id===u.subject)||typeof u.id!=='string'||seen.has(u.id)||!String(u.name||'').trim())throw Error('单元名称或编号不正确。');
+    if(!u||!SUBJECTS.some(x=>x.id===u.subject)||!goodId(u.id)||seen.has(u.id)||!String(u.name||'').trim())throw Error('单元名称或编号不正确。');
     seen.add(u.id);
   }
   return {...d,...s,id:'main',name:cut(s.name||d.name,20),grade:cut(s.grade||d.grade,30),term:['上册','下册'].includes(s.term)?s.term:'上册',
@@ -48,7 +50,7 @@ export function normalizeSettings(s){
 }
 export function operation(type,payload){return {id:uid(),type,payload,at:new Date().toISOString()};}
 export function applyOperation(input,op,role='parent'){
-  if(!op||typeof op.id!=='string'||op.id.length>100||!op.payload)throw Error('操作格式不正确。');
+  if(!op||!goodId(op.id)||!op.payload)throw Error('操作格式不正确。');
   if(input.applied.includes(op.id))return {state:input,duplicate:true};
   const state=structuredClone(input),p=op.payload;
   if(role!=='parent'&&op.type!=='submit')throw Error('需要家长确认。');
@@ -68,17 +70,17 @@ export function applyOperation(input,op,role='parent'){
     }
     next.version=state.settings.version+1;state.settings=next;
   }else if(op.type==='remove'||op.type==='restore'){
-    const q=state.questions[p.questionId];if(!q)throw Error('题目不存在。');
+    const q=Object.hasOwn(state.questions,p.questionId)?state.questions[p.questionId]:null;if(!q)throw Error('题目不存在。');
     if(op.type==='remove')q.deletedAt=op.at;else{q.deletedAt=null;q.status='todo';q.statusVersion++;}
     q.version++;q.updatedAt=op.at;
   }else if(op.type==='submit'){
-    const q=state.questions[p.questionId];if(!q||q.deletedAt)throw Error('题目已移除。');
-    const id=p.attemptId||op.id;
+    const q=Object.hasOwn(state.questions,p.questionId)?state.questions[p.questionId]:null;if(!q||q.deletedAt)throw Error('题目已移除。');
+    const id=p.attemptId||op.id;if(!goodId(id))throw Error('作答编号不正确。');
     if(state.attempts[id]||q.status==='mastered')return {state:input,duplicate:true};
     state.attempts[id]={id,questionId:q.id,at:op.at,result:'pending',photo:p.photo||'',photoRef:p.photoRef||'',note:cut(p.note,1000)};
     if(q.status!=='pending'){q.status='pending';q.statusVersion++;q.version++;q.updatedAt=op.at;}
   }else if(op.type==='review'){
-    const q=state.questions[p.questionId];if(!q||q.deletedAt)throw Error('题目不存在。');
+    const q=Object.hasOwn(state.questions,p.questionId)?state.questions[p.questionId]:null;if(!q||q.deletedAt)throw Error('题目不存在。');
     if(!['correct','retry'].includes(p.result))throw Error('请选择做对或再练。');
     if((p.baseStatusVersion??0)!==q.statusVersion)throw Error('这道题已有更新的批改结果，请先同步。');
     const a=p.attemptId?state.attempts[p.attemptId]:null;
@@ -116,7 +118,7 @@ export function validateBackup(b){
   normalizeSettings(b.state.settings);
   if(Object.keys(b.state.questions).length>5000)throw Error('一次最多导入 5000 道题。');
   for(const [id,q]of Object.entries(b.state.questions)){
-    if(id!==q.id||!id.match(/^[a-zA-Z0-9_-]{1,100}$/))throw Error('题目编号不正确。');
+    if(id!==q.id||!goodId(id))throw Error('题目编号不正确。');
     questionOf(q);
     if(!b.state.settings.units.some(u=>u.id===q.unitId&&u.subject===q.subject))throw Error('备份中有题目没有对应单元。');
     for(const key of ['image','originalImage'])if(q[key]&&!/^data:image\/(jpeg|png|webp);base64,/.test(q[key]))throw Error('题目图片格式不正确。');
@@ -124,7 +126,7 @@ export function validateBackup(b){
   }
   if(Object.keys(b.state.attempts).length>30000)throw Error('备份记录过多。');
   for(const [id,a]of Object.entries(b.state.attempts)){
-    if(id!==a.id||!/^[a-zA-Z0-9_-]{1,100}$/.test(id)||!b.state.questions[a.questionId]||!['pending','correct','retry'].includes(a.result)||!Number.isFinite(Date.parse(a.at)))throw Error('作答记录不正确。');
+    if(id!==a.id||!goodId(id)||!b.state.questions[a.questionId]||!['pending','correct','retry'].includes(a.result)||!Number.isFinite(Date.parse(a.at)))throw Error('作答记录不正确。');
     if(a.photo&&!/^data:image\/(jpeg|png|webp);base64,/.test(a.photo))throw Error('作答照片格式不正确。');
   }
   return b;
