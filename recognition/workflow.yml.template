@@ -28,7 +28,9 @@ jobs:
         run: node processor/recognition/process-queue.mjs
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
           DATA_REPOSITORY: ${{ github.repository }}
-          RECOGNITION_MODEL: gpt-4.1
+          RECOGNITION_PROVIDER: __PROVIDER__
+          RECOGNITION_MODEL: __MODEL__
           MAX_DAILY_RECOGNITION: '30'
