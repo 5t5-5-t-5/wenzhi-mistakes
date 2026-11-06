@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f5f0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="错题小册">
+<title>家长端 · 问之的错题小册</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+<header class="app-header">
+  <button class="brand" id="homeButton" aria-label="回到科目首页"><span class="brand-mark" aria-hidden="true">册</span><span id="brandName">问之的错题小册</span></button>
+  <div class="header-actions"><a class="quiet" href="child.html">孩子端 ↗</a><button class="quiet" id="syncButton">同步设置</button><button class="quiet" id="backupButton">备份与导入</button><button class="quiet" id="settingsButton">设置</button><button class="primary small" id="addTopButton">＋ 收一道错题</button></div>
+</header>
+<div class="demo-banner" id="demoBanner" hidden><span>正在看演示例题，不会写入你的错题本，也不对应教材原题。</span><button class="text-button" id="exitDemo">退出示例</button></div>
+<nav class="breadcrumbs" id="breadcrumbs" aria-label="当前位置"></nav>
+<main id="content"><div class="loading">正在打开小册……</div></main>
+<footer class="app-footer"><span id="syncStatus">正在打开本机记录</span><span>录入与核对在家长端完成，孩子端一次只看一题。</span></footer>
+
+</div>
+
+<dialog id="questionDialog" class="modal entry-modal">
+<form id="questionForm">
+  <div class="modal-heading"><div><p class="eyebrow">一题一收，慢慢巩固</p><h2 id="entryHeading">收一道错题</h2></div><button type="button" class="close" data-close="questionDialog" aria-label="关闭">×</button></div>
+  <div class="form-grid"><label>科目<select id="qSubject" required></select></label><label>归到哪个单元<select id="qUnit" required></select></label></div>
+  <div class="upload-zone" id="uploadZone"><span class="upload-symbol" aria-hidden="true">▧</span><strong>拍照、扫描图片，或导入 PDF</strong><p>先裁剪题目；已有的手写答案，可以用白框遮住。</p><button class="secondary" type="button" id="choosePhoto">拍照／图片／PDF</button></div>
+  <input id="photoInput" type="file" accept="image/*,application/pdf" hidden>
+  <div id="draftImageBox" class="draft-image-box" hidden><img id="draftImagePreview" alt="将保存的题目图片"><div class="image-actions"><button type="button" class="secondary small" id="editPhoto">裁剪／遮住答案</button><button type="button" class="text-button danger" id="removePhoto">移除照片</button></div></div>
+  <label>题目标题 <span class="optional">选填，方便以后找到</span><input id="qTitle" maxlength="120" placeholder="例如：看图列式、拼音辨认、Hello 的用法"></label>
+  <label>题干 <span class="optional">有照片时可以不填</span><textarea id="qText" rows="4" placeholder="也可以直接输入题目。换行会保留在打印卷里。"></textarea></label>
+  <div class="form-grid"><label>知识点／标签<input id="qTags" maxlength="120" placeholder="例如：比较大小、声母、问候"></label><label>错在哪里<select id="qReason"><option value="">暂不填写</option><option>题意没读懂</option><option>概念没分清</option><option>计算或书写出错</option><option>方法不熟</option><option>漏看条件</option><option>其他</option></select></label></div>
+  <details class="answer-entry"><summary>记录答案和讲解 <span>只供家长核对</span></summary><label>正确答案<textarea id="qAnswer" rows="2" placeholder="给家长核对用，练习卷不会打印。"></textarea></label><label>讲解／提醒<textarea id="qAnalysis" rows="3" placeholder="下次遇到这类题，提醒孩子先想哪一步？"></textarea></label></details>
+  <div class="form-grid"><label>来源类型<select id="qSourceType"><option value="book">课本</option><option value="test">老师试卷</option><option value="practice">53 等练习册</option><option value="other">其他</option></select></label><label>资料名称<input id="qSource" maxlength="180" placeholder="例如：53 天天练、周练试卷"></label></div><div class="form-grid"><label>页码<input id="qPage" maxlength="40" placeholder="第几页"></label><label>题号<input id="qNumber" maxlength="40" placeholder="原资料上的题号"></label></div>
+  <p class="form-error" id="entryError" role="alert" hidden></p>
+  <div class="modal-footer"><button type="button" class="text-button danger" id="deleteQuestion" hidden>删除这道题</button><div class="grow"></div><button type="submit" class="secondary" id="saveNext">保存，再从本页收题</button><button type="submit" class="primary" id="saveQuestion">保存错题</button></div>
+</form>
+</dialog>
+
+<dialog id="imageDialog" class="modal image-modal">
+<div class="modal-heading"><div><p class="eyebrow">让照片变成一张干净的题卡</p><h2>整理题目照片</h2></div><button type="button" class="close" data-close="imageDialog" aria-label="关闭图片整理">×</button></div>
+<div class="editor-tools"><button class="tool active" id="cropTool" aria-pressed="true">裁剪题目</button><button class="tool" id="maskTool" aria-pressed="false">白框遮住答案</button><span class="grow"></span><button class="quiet" id="undoImage">撤销</button><button class="quiet" id="resetImage">恢复原图</button></div>
+<div id="pdfControls" class="pdf-controls" hidden><button class="secondary small" id="pdfPrev">上一页</button><span id="pdfPageLabel"></span><button class="secondary small" id="pdfNext">下一页</button></div><p class="editor-hint" id="editorHint">在照片上拖一个框，保留框里的题目。</p>
+<div class="canvas-scroll"><div class="canvas-wrap" id="canvasWrap"><canvas id="imageCanvas" aria-label="拖动选择要裁剪或遮盖的区域"></canvas><div id="imageSelection" hidden></div></div></div>
+<div class="modal-footer"><p class="muted">遮盖会保存在题目图片中；原图仍可留着以后重新整理。</p><span class="grow"></span><button class="primary" id="useImage">保存题图</button></div>
+</dialog>
+
+<dialog id="unitsDialog" class="modal compact-modal">
+<div class="modal-heading"><div><p class="eyebrow" id="unitsSubject"></p><h2>整理单元</h2></div><button class="close" data-close="unitsDialog" aria-label="关闭">×</button></div>
+<p class="muted">按课本目录改名字即可。含错题的单元要先移走题目，再删除。</p>
+<div id="unitEditList" class="unit-edit-list"></div>
+<div class="inline-add"><input id="newUnitName" placeholder="新单元名称，例如：期末复习" maxlength="80"><button class="secondary" id="addUnit">添加单元</button></div>
+<div class="modal-footer"><span class="grow"></span><button class="primary" id="saveUnits">保存单元</button></div>
+</dialog>
+
+<dialog id="settingsDialog" class="modal compact-modal">
+<form id="settingsForm">
+<div class="modal-heading"><h2>小册设置</h2><button type="button" class="close" data-close="settingsDialog" aria-label="关闭">×</button></div>
+<label>孩子的称呼<input id="setName" maxlength="20" required></label>
+<div class="form-grid"><label>年级<input id="setGrade" maxlength="30" required></label><label>学期<select id="setTerm"><option>上册</option><option>下册</option></select></label></div>
+<div id="editionInputs"></div>
+<p class="muted">教材版本只用于标注。单元名称可按实际目录自行修改，工具不会自动判断一道题属于哪个单元。</p>
+<div class="modal-footer"><button type="button" class="quiet" id="storageInfo">查看保存情况</button><span class="grow"></span><button class="primary" type="submit">保存设置</button></div>
+</form>
+</dialog>
+
+<dialog id="backupDialog" class="modal compact-modal">
+<div class="modal-heading"><div><p class="eyebrow">给认真整理的题目留一份副本</p><h2>备份与导入</h2></div><button class="close" data-close="backupDialog" aria-label="关闭">×</button></div>
+<div class="backup-block"><span class="step-number">01</span><div><h3>导出一份备份</h3><p>包含题目、照片、答案和单元。保存到“文件”或电脑上，换设备也能导入。</p><button class="primary" id="exportBackup">导出完整备份</button></div></div>
+<div class="backup-block"><span class="step-number">02</span><div><h3>导入以前的备份</h3><p>按题目编号合并，不会因为重复导入而多出同一道题。已有题目只接收较新的版本。</p><input id="importInput" type="file" accept=".json,application/json" hidden><button class="secondary" id="chooseImport">选择备份文件</button></div></div>
+<p class="storage-note">本机始终保留一份记录。连接家庭同步后可跨设备使用；清除浏览器数据前，请先导出备份。</p>
+</dialog>
+
+<dialog id="reviewDialog" class="modal compact-modal">
+<div class="modal-heading"><div><p class="eyebrow">再试一次，就是新的进步</p><h2>记录这次再练</h2></div><button class="close" data-close="reviewDialog" aria-label="关闭">×</button></div>
+<p id="reviewTitle" class="review-title"></p>
+<div class="review-options"><button class="review-choice correct" id="reviewCorrect"><span>✓</span><strong>这次做对了</strong><small>记一次独立做对</small></button><button class="review-choice retry" id="reviewRetry"><span>↻</span><strong>还要再练</strong><small>留着，过几天再试</small></button></div>
+<p class="muted">确认做对后退出轮转。题目与历史仍保留，需要时可放回。</p><div id="reviewAttachment"></div><div id="reviewAnswer"></div>
+</dialog>
+
+<dialog id="printDialog" class="print-dialog">
+<div id="printControls">
+<div class="print-controls-heading"><div><p class="eyebrow">一次只做眼前这一题</p><h2>单题打印</h2></div><button class="close" data-close="printDialog" aria-label="关闭打印预览">×</button></div>
+<p id="printCount" class="muted"></p>
+<label>练习卷标题<input id="printTitle" maxlength="80"></label>
+<label>每题留多少作答空间<select id="printSpace"><option value="24">少一些 · 约 2.4 厘米</option><option value="38">标准 · 约 3.8 厘米</option><option value="60" selected>多一些 · 约 6 厘米</option></select></label>
+
+<p class="print-note">练习题不会显示答案、讲解和掌握状态。照片中原有的笔迹，请先在“编辑错题”里遮住。</p>
+<button class="primary print-start" id="startPrint">打印这一题／存成 PDF</button>
+<p class="muted tiny">打印纸张选 A4，关闭浏览器自带的页眉页脚。iPad 可在系统打印窗口中选择打印机。</p>
+</div>
+<div id="paperScroller"><article id="printPaper" class="paper"></article></div>
+</dialog>
+
+<dialog id="lightboxDialog" class="modal lightbox-modal"><button class="close" data-close="lightboxDialog" aria-label="关闭大图">×</button><img id="lightboxImage" alt="题目大图"></dialog>
+<dialog id="syncDialog" class="modal compact-modal"><div class="modal-heading"><div><p class="eyebrow">家长端和 iPad 共用一份记录</p><h2>家庭同步</h2></div><button class="close" data-close="syncDialog" aria-label="关闭">×</button></div><p class="muted">接口负责读写 GitHub 私有仓库。GitHub 访问钥匙保留在接口服务，不放进孩子端。</p><label>同步接口地址<input id="syncURL" type="url" placeholder="https://你的接口.workers.dev" autocomplete="url"></label><label>家长同步密码<input id="syncPassword" type="password" autocomplete="current-password" placeholder="部署时设置的家长密码"></label><p id="syncMessage" class="muted"></p><div class="modal-footer"><button class="primary" id="connectSync">连接并同步</button><button class="secondary" id="syncNow">立即同步</button><button class="quiet" id="copyChildLink">复制 iPad 配对链接</button></div><button class="text-button danger" id="resetSyncFromCloud">处理冲突：导出本机备份后使用云端记录</button><p class="storage-note">未配置接口时，完整功能可在本机使用；界面会明确显示“仅本机保存”。导出备份不会包含登录密码或配对钥匙。</p></dialog>
+<dialog id="parentAuthDialog" class="modal compact-modal"><div class="modal-heading"><h2>家长验证</h2><button class="close" data-close="parentAuthDialog" aria-label="关闭">×</button></div><p class="muted" id="authHint"></p><label>家长密码<input id="authPassword" type="password" autocomplete="current-password"></label><p id="authError" class="form-error" hidden></p><button class="primary" id="authConfirm">确认</button></dialog>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script type="module" src="parent.js"></script>
+</body>
+</html>

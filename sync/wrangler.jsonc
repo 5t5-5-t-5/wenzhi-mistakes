@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wenzhi-mistakes-sync",
+  "main": "worker.js",
+  "compatibility_date": "2026-01-01",
+  "vars": {
+    "GITHUB_OWNER": "5t5-5-t-5",
+    "GITHUB_REPO": "wenzhi-mistakes-data",
+    "GITHUB_BRANCH": "main",
+    "ALLOWED_ORIGINS": "https://5t5-5-t-5.github.io"
+  },
+  "durable_objects": {"bindings": [{"name": "AUTH_GATE", "class_name": "AuthGate"}]},
+  "migrations": [{"tag": "v1", "new_sqlite_classes": ["AuthGate"]}]
+}

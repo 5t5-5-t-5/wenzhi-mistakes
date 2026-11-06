@@ -1,0 +1,4 @@
+# Only on the server. Never commit a real .dev.vars file.
+GITHUB_TOKEN=github_fine_grained_token_for_private_data_repo
+PARENT_PASSWORD_HASH=sha256_of_a_long_random_parent_password
+SESSION_SECRET=at_least_32_random_bytes
