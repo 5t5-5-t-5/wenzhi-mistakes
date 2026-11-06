@@ -1,0 +1,78 @@
+/* Touch layouts keep the collection form usable on phones and iPads. */
+@media screen and (pointer:coarse), screen and (max-width:900px){
+  input,select,textarea,label>input,label>select,label>textarea,.search-input,.filter-select{font-size:16px}
+  .primary,.secondary,.quiet,.text-button,.tool,.small,.close{min-height:44px;min-width:44px}
+  .close{width:44px;height:44px}
+  .modal[open],#printDialog[open]{position:fixed;inset:calc(var(--viewport-top,0px) + 8px) auto auto 50%;transform:translateX(-50%);margin:0;max-height:calc(var(--available-height,100dvh) - 16px);overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  #printDialog[open]{height:calc(var(--available-height,100dvh) - 16px)}
+  .entry-modal .modal-footer,.image-modal .modal-footer{position:sticky;bottom:-28px;z-index:2;background:var(--bg);padding:14px 0 max(14px,env(safe-area-inset-bottom));box-shadow:0 -9px 18px var(--bg);gap:10px}
+  .modal{scroll-padding-bottom:100px}
+  .modal-heading{gap:12px}
+  .form-grid>label{min-width:0}
+  .editor-tools{gap:6px}
+  .canvas-scroll{overscroll-behavior:contain}
+  .header-actions{flex-wrap:wrap}
+}
+.mobile-break{display:none}
+.upload-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.editor-view{display:flex;align-items:center;gap:8px;margin:6px 0 10px}
+.editor-view .secondary{padding:5px 12px}
+.editor-view output{font-size:12px;color:var(--muted);min-width:40px;text-align:center}
+.canvas-wrap.zoomed{max-width:none}
+.canvas-wrap.zoomed #imageCanvas{max-width:none}
+.canvas-scroll.is-zoomed{text-align:left}
+@media screen and (max-width:620px){
+  .mobile-break{display:block}
+  .book-count>span{display:block;white-space:nowrap}
+  .app-header{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:16px max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left))}
+  .app-header>.brand{grid-column:1/3;grid-row:1;min-width:0;font-size:13px;gap:8px;text-align:left}
+  .brand-mark{flex-shrink:0}
+  #brandName{overflow-wrap:anywhere}
+  .app-header .header-actions{display:contents}
+  .header-actions>.quiet{order:2;font-size:12px;padding:8px 4px;width:100%}
+  .app-header .header-actions>#addTopButton{grid-column:3/5;grid-row:1;justify-self:end;margin:0;font-size:12px;padding:10px 12px;max-width:100%}
+  .breadcrumbs,main,.app-footer,.demo-banner{margin-left:max(16px,env(safe-area-inset-left));margin-right:max(16px,env(safe-area-inset-right))}
+  .modal{width:calc(100% - 16px);padding:20px 16px;border-radius:16px}
+  .image-modal{width:calc(100% - 12px);padding:16px 12px}
+  .entry-modal .modal-footer{bottom:-20px}
+  .image-modal .modal-footer{bottom:-16px}
+  .editor-tools .grow{display:none}
+  .editor-tools .tool,.editor-tools .quiet{font-size:12px;padding:8px 10px}
+  .editor-hint{font-size:12px;line-height:1.6}
+  .image-modal .modal-heading .eyebrow{display:none}
+  .image-modal .modal-heading{margin-bottom:12px}
+  .image-modal .modal-heading h2{font-size:22px}
+  .image-modal .modal-footer .muted{display:none}
+  .image-modal #useImage{width:100%}
+  .pdf-controls{justify-content:center;flex-wrap:wrap}
+  .question-bottom{gap:7px}
+  .question-bottom button{padding:9px 10px}
+  .assignment-line{font-size:12px}
+  .demo-banner{align-items:flex-start;flex-wrap:wrap}
+}
+@media screen and (max-width:480px){
+  .form-grid{grid-template-columns:minmax(0,1fr);gap:0}
+  .form-grid.source-location{grid-template-columns:1fr 1fr;gap:12px}
+  .form-grid>label{margin-bottom:15px}
+  .optional{display:block;margin:3px 0 0}
+  .upload-zone{padding:20px 12px}
+  .upload-zone p{font-size:12px}
+  .upload-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .upload-actions button{padding:10px 8px;font-size:12px}
+  .entry-modal .modal-footer .grow{display:none}
+  #saveNext{flex:1;white-space:normal;line-height:1.4;padding:10px 12px}
+  #saveQuestion{flex:1;padding:10px 12px}
+  #deleteQuestion{flex-basis:100%;justify-content:flex-start}
+  .backup-block{gap:12px}
+  #syncDialog .modal-footer{gap:8px}
+  #syncDialog .modal-footer button{flex:1;white-space:normal;font-size:12px;padding:10px}
+  #copyChildLink{flex-basis:100%!important}
+  .inline-add{flex-wrap:wrap}
+  .inline-add input{min-width:160px}
+}
+@media screen and (max-height:500px) and (pointer:coarse){
+  .modal{padding-top:12px;padding-bottom:12px}
+  .modal-heading{margin-bottom:10px}
+  .modal-heading .eyebrow{display:none}
+  .modal-heading h2{font-size:21px}
+}
