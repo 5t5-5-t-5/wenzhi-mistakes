@@ -66,7 +66,7 @@ export function applyOperation(input,op,role='parent'){
     if((p.baseVersion??0)!==state.settings.version)throw Error('设置已在另一台设备修改，请先同步。');
     const next=normalizeSettings(p.settings);
     for(const q of Object.values(state.questions)){
-      if(!q.deletedAt&&!next.units.some(u=>u.id===q.unitId&&u.subject===q.subject))throw Error('请先移走单元中的题目，再删除单元。');
+      if(!next.units.some(u=>u.id===q.unitId&&u.subject===q.subject))throw Error('请先移走单元中的题目，再删除单元。');
     }
     next.version=state.settings.version+1;state.settings=next;
   }else if(op.type==='remove'||op.type==='restore'){
@@ -90,7 +90,8 @@ export function applyOperation(input,op,role='parent'){
     for(const old of Object.values(state.attempts))if(old.questionId===q.id&&old.result==='pending'){old.result=p.result;old.reviewedAt=op.at;}
     q.status=p.result==='correct'?'mastered':'practicing';q.statusVersion++;q.version++;q.lastPracticedAt=op.at;q.updatedAt=op.at;
   }else if(op.type==='importBackup'){
-    const b=validateBackup(p.backup),units=new Set(state.settings.units.map(u=>u.id));
+    const b=validateBackup(p.backup),virgin=!Object.keys(state.questions).length&&state.settings.version===0;if(virgin)state.settings={...normalizeSettings(b.state.settings),version:0};
+    const units=new Set(state.settings.units.map(u=>u.id));
     for(const u of b.state.settings.units)if(!units.has(u.id)){state.settings.units.push(u);units.add(u.id);}
     state.settings.version++;
     for(const [id,raw]of Object.entries(b.state.questions)){
