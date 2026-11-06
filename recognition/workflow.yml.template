@@ -27,8 +27,7 @@ jobs:
       - name: Process private question requests
         run: node processor/recognition/process-queue.mjs
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+          __SECRET__: ${{ secrets.__SECRET__ }}
           GH_TOKEN: ${{ github.token }}
           DATA_REPOSITORY: ${{ github.repository }}
           RECOGNITION_PROVIDER: __PROVIDER__
